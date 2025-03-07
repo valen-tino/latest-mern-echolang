@@ -34,12 +34,13 @@ export default function Upload() {
         setUploadComplete(true);
         setMetadata({
           format: file.type.split('/')[1],
-          duration: 0,
+          duration: 0, // Will be updated after processing
           size: file.size,
           uploadDate: new Date().toISOString(),
           filename: file.name
         });
         
+        // Extract video metadata
         const video = document.createElement('video');
         video.preload = 'metadata';
         
@@ -48,11 +49,12 @@ export default function Upload() {
           video.src = URL.createObjectURL(file);
         });
 
+        // Generate thumbnail
         const thumbnail = await new Promise<string>((resolve) => {
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
           
-          video.currentTime = 1;
+          video.currentTime = 1; // Seek to 1 second
           video.onseeked = () => {
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
@@ -85,6 +87,7 @@ export default function Upload() {
       <h1 className="text-3xl font-bold mb-8">Upload Video</h1>
 
       <div className="space-y-6">
+        {/* Step 1: Language Selection */}
         <Card>
           <CardContent className="pt-6">
             <div className="space-y-4">
@@ -98,6 +101,7 @@ export default function Upload() {
           </CardContent>
         </Card>
 
+        {/* Step 2: File Upload */}
         {sourceLanguage && !file && (
           <Card>
             <CardContent className="pt-6">
@@ -112,6 +116,7 @@ export default function Upload() {
           </Card>
         )}
 
+        {/* Step 3: Upload Progress */}
         {file && !uploadComplete && (
           <Card>
             <CardContent className="pt-6">
@@ -161,6 +166,7 @@ export default function Upload() {
           </Card>
         )}
 
+        {/* Step 4: Video Metadata */}
         {uploadComplete && metadata && (
           <Card>
             <CardContent className="pt-6">

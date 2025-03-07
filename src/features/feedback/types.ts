@@ -1,20 +1,21 @@
-import { create } from 'zustand';
-
-type Feedback = {
+export interface ProductFeedback {
   id: string;
-  videoId: string;
-  title: string;
+  userId: string;
+  userName: string;
+  productId: string;
+  productName: string;
   rating: number;
-  comment: string;
+  content: string;
   createdAt: string;
-};
+}
 
-type FeedbackStore = {
-  feedbacks: Feedback[];
-  addFeedback: (feedback: Feedback) => void;
-};
+export interface FeedbackFormData {
+  rating: number;
+  content: string;
+}
 
-export const useFeedbackStore = create<FeedbackStore>((set) => ({
-  feedbacks: [],
-  addFeedback: (feedback) => set((state) => ({ feedbacks: [...state.feedbacks, feedback] })),
-}));
+export interface StarRatingProps {
+  value: number;
+  onChange: (value: number) => void;
+  disabled?: boolean;
+}

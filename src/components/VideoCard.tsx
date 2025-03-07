@@ -1,39 +1,50 @@
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Clock, Globe } from 'lucide-react';
 
-export function VideoCard({ video }: { video: any }) {
+interface VideoCardProps {
+  video: {
+    id: string;
+    title: string;
+    thumbnail: string;
+    duration: string;
+    status: string;
+    languages: string[];
+  };
+}
+
+export function VideoCard({ video }: VideoCardProps) {
   return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="space-y-2">
+    <Link to={`/video/${video.id}`}>
+      <Card className="overflow-hidden hover:shadow-lg transition-shadow">
+        <div className="relative aspect-video">
           <img
             src={video.thumbnail}
             alt={video.title}
-            className="w-full h-48 object-cover rounded-lg"
+            className="object-cover w-full h-full"
           />
-          <h3 className="font-medium">{video.title}</h3>
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground">{video.duration}</span>
-            <Badge variant={video.status === 'completed' ? 'default' : 'secondary'}>
-              {video.status}
-            </Badge>
+          <div className="absolute bottom-2 right-2 bg-black/75 text-white px-2 py-1 rounded-md text-sm flex items-center">
+            <Clock className="w-4 h-4 mr-1" />
+            {video.duration}
           </div>
-          <div className="flex flex-wrap gap-2">
-            {video.languages.map((lang: string) => (
-              <Badge key={lang} variant="outline">{lang}</Badge>
-            ))}
-          </div>
-          <Link 
-            to={`/video/${video.id}`}
-            className="inline-block w-full mt-2"
+          <Badge 
+            variant={video.status === 'completed' ? 'default' : 'secondary'}
+            className="absolute top-2 right-2"
           >
-            <Button variant="outline" className="w-full">
-              View Details
-            </Button>
-          </Link>
+            {video.status}
+          </Badge>
         </div>
-      </CardContent>
-    </Card>
+        <CardContent className="pt-4">
+          <h3 className="font-semibold text-lg line-clamp-1">{video.title}</h3>
+        </CardContent>
+        <CardFooter className="flex items-center gap-2">
+          <Globe className="w-4 h-4" />
+          <div className="text-sm text-muted-foreground">
+            {video.languages.length} languages
+          </div>
+        </CardFooter>
+      </Card>
+    </Link>
   );
 }

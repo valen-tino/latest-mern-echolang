@@ -1,50 +1,83 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-import type { FeedbackFormData } from '@/features/feedback/types';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { StarRating } from './StarRating';
+import { FeedbackFormData } from '../types';
+import { toast } from 'sonner';
 
-export function FeedbackForm({
-  productName,
-  onSubmit,
-}: {
+interface FeedbackFormProps {
   productName: string;
   onSubmit: (data: FeedbackFormData) => Promise<void>;
-}) {
-  const [formData, setFormData] = useState<FeedbackFormData>({
-    rating: 5,
-    comment: '',
-  });
+}
+
+export function FeedbackForm({ productName, onSubmit }: FeedbackFormProps) {
+  const [rating, setRating] = useState(0);
+  const [content, setContent] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await onSubmit(formData);
+
+    if (rating === 0) {
+      toast.error('Please select a rating');
+      return;
+    }
+
+    if (!content.trim()) {
+      toast.error('Please provide feedback');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await onSubmit({ rating, content });
+      setRating(0);
+      setContent('');
+      toast.success('Feedback submitted successfully');
+    } catch (error) {
+      toast.error('Failed to submit feedback');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="rating">Rating for {productName}</Label>
-        <Input
-          type="number"
-          id="rating"
-          min="1"
-          max="5"
-          value={formData.rating}
-          onChange={(e) => setFormData({ ...formData, rating: Number(e.target.value) })}
-        />
-      </div>
-      <div>
-        <Label htmlFor="comment">Comments</Label>
-        <Textarea
-          id="comment"
-          value={formData.comment}
-          onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
-          rows={4}
-        />
-      </div>
-      <Button type="submit">Submit Feedback</Button>
-    </form>
+    <Card>
+      <form onSubmit={handleSubmit}>
+        <CardHeader>
+          <CardTitle>Rate {productName}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Rating</label>
+            <StarRating 
+              value={rating} 
+              onChange={setRating}
+              disabled={isSubmitting}
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Feedback</label>
+            <Textarea
+              placeholder="Share your experience..."
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              disabled={isSubmitting}
+              rows={4}
+            />
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting}
+            className="w-full"
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
   );
 }

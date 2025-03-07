@@ -1,12 +1,15 @@
 import { create } from 'zustand';
-import type { Feedback } from '@/features/feedback/types';
+import { ProductFeedback } from '../types';
 
-type FeedbackStore = {
-  feedbacks: Feedback[];
-  addFeedback: (feedback: Feedback) => void;
-};
+interface FeedbackStore {
+  feedbacks: ProductFeedback[];
+  addFeedback: (feedback: ProductFeedback) => void;
+}
 
 export const useFeedbackStore = create<FeedbackStore>((set) => ({
   feedbacks: [],
-  addFeedback: (feedback) => set((state) => ({ feedbacks: [...state.feedbacks, feedback] })),
+  addFeedback: (feedback) => 
+    set((state) => ({
+      feedbacks: [feedback, ...state.feedbacks]
+    }))
 }));

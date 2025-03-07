@@ -1,15 +1,16 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider } from './components/theme-provider';
-import { Toaster } from 'sonner';
-import { ProtectedRoute } from './features/auth/ProtectedRoute';
-import Navbar from './components/Navbar';
-import { Footer } from './components/Footer';
-import Home from './pages/Home';
-import Login from './pages/Login';
-import SignUp from './pages/SignUp';
-import Dashboard from './pages/Dashboard.tsx';
-import Upload from './pages/Upload';
-import VideoDetails from './pages/VideoDetails';
+import { ThemeProvider } from '@/components/theme-provider';
+import { Toaster } from '@/components/ui/sonner';
+import { ProtectedRoute } from '@/features/auth';
+import Navbar from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
+import Home from '@/pages/Home';
+import Login from '@/pages/Login';
+import SignUp from '@/pages/SignUp';
+import { CustomerDashboard } from '@/features/dashboard/components/CustomerDashboard';
+import { AdminDashboard } from '@/features/dashboard/components/AdminDashboard';
+import Upload from '@/pages/Upload';
+import VideoDetails from '@/pages/VideoDetails';
 
 export default function App() {
   return (
@@ -25,15 +26,23 @@ export default function App() {
               <Route 
                 path="/dashboard" 
                 element={
-                  <ProtectedRoute>
-                    <Dashboard />
+                  <ProtectedRoute requireAdmin={false}>
+                    <CustomerDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/admin/dashboard" 
+                element={
+                  <ProtectedRoute requireAdmin={true}>
+                    <AdminDashboard />
                   </ProtectedRoute>
                 } 
               />
               <Route 
                 path="/upload" 
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requireAdmin={false}>
                     <Upload />
                   </ProtectedRoute>
                 } 
@@ -41,16 +50,17 @@ export default function App() {
               <Route 
                 path="/video/:id" 
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute requireAdmin={false}>
                     <VideoDetails />
                   </ProtectedRoute>
                 } 
               />
+              {/* Catch-all redirect */}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </main>
           <Footer />
-          <Toaster position="top-center" />
+          <Toaster />
         </div>
       </Router>
     </ThemeProvider>

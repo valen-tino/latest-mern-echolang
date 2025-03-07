@@ -1,31 +1,21 @@
-export interface Video {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail: string;
-  duration: string;
-  status: string;
-  sourceLanguage: string;
-  translations: {
-    language: string;
-    status: string;
-    progress: number;
-  }[];
-}
+import { Video } from '../types';
 
 export async function getVideoById(id: string): Promise<Video> {
-  // Mock implementation
+  // Simulated API call
+  await new Promise(resolve => setTimeout(resolve, 500));
+
   return {
     id,
-    title: 'Sample Video',
-    description: 'Demo video description',
-    thumbnail: '/placeholder.jpg',
-    duration: '12:34',
-    status: 'processed',
+    title: 'Product Demo',
+    description: 'A comprehensive overview of our latest product features.',
+    thumbnail: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113',
+    duration: '2:30',
+    status: 'completed',
     sourceLanguage: 'English',
     translations: [
-      { language: 'Spanish', status: 'completed', progress: 100 },
-      { language: 'French', status: 'processing', progress: 45 }
-    ]
+      { language: 'Spanish', progress: 100, status: 'completed' },
+      { language: 'French', progress: 65, status: 'processing' },
+      { language: 'German', progress: 30, status: 'processing' },
+    ],
   };
 }
