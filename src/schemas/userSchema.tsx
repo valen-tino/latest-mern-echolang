@@ -1,10 +1,5 @@
-const mongoose = require('mongoose');
-const { Schema } = mongoose;
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 
-import mongoose from 'mongoose';
-import { Schema } from 'mongoose';
 const userSchema = new Schema(
   {
     email: {
@@ -20,7 +15,6 @@ const userSchema = new Schema(
     },
     role: {
       type: String,
-      enum: ['admin', 'user'], // Example roles
       enum: ['admin', 'user'],
       default: 'user',
     },
@@ -28,19 +22,9 @@ const userSchema = new Schema(
       type: Schema.Types.ObjectId,
       ref: 'Preferences',
     },
-    created_at: {
-      type: Date,
-      default: Date.now,
-    },
-    updated_at: {
-      type: Date,
-      default: Date.now,
-    },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model('Users', userSchema);
 const User = mongoose.model('Users', userSchema);
-
 export { User };

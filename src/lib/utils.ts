@@ -1,50 +1,51 @@
-import { type ClassValue, clsx } from "clsx";
+import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-/**
- * Combines Tailwind CSS classes with proper precedence
- */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 /**
- * Formats bytes into human readable string
+ * Formats bytes into human readable format
  */
 export function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 Bytes';
-  
+  if (bytes === 0) return '0 B';
+
   const k = 1024;
-  const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  
+
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
 /**
- * Formats seconds into HH:MM:SS or MM:SS format
+ * Formats duration in seconds to HH:MM:SS format
  */
 export function formatDuration(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const remainingSeconds = Math.floor(seconds % 60);
 
+  const parts = [];
+
   if (hours > 0) {
-    return `${hours}:${padZero(minutes)}:${padZero(remainingSeconds)}`;
+    parts.push(hours.toString().padStart(2, '0'));
   }
-  return `${minutes}:${padZero(remainingSeconds)}`;
+  
+  parts.push(minutes.toString().padStart(2, '0'));
+  parts.push(remainingSeconds.toString().padStart(2, '0'));
+
+  return parts.join(':');
 }
 
-/**
- * Pads a number with leading zero if needed
- */
-function padZero(num: number): string {
-  return num.toString().padStart(2, '0');
+export function formatDate(date: string | Date) {
+  return new Date(date).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
 }
 
-/**
- * Extracts error message from unknown error type
- */
 export function getErrorMessage(error: unknown): string {
   if (error instanceof Error) {
     return error.message;
@@ -78,7 +79,7 @@ export function debounce<T extends (...args: any[]) => any>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout;
+  let timeout: ReturnType<typeof setTimeout>;
 
   return function executedFunction(...args: Parameters<T>) {
     const later = () => {

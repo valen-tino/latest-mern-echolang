@@ -1,42 +1,41 @@
 import express from 'express';
 import cors from 'cors';
-import { MongoClient } from 'mongodb';
-import dotenv from 'dotenv';
+import { config } from 'dotenv';
+import { connectToDatabase } from '../src/lib/db.js';
 import authRoutes from './routes/auth.js';
 import videoRoutes from './routes/videos.js';
 
-// Load environment variables
-dotenv.config();
+config();
 
 const app = express();
-const port = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3001;
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection
-const uri = process.env.MONGODB_URI;
-const client = new MongoClient(uri);
-
-async function connectDB() {
-  try {
-    await client.connect();
-    console.log('Connected to MongoDB');
-    app.locals.db = client.db(); // Make db available to route handlers
-  } catch (error) {
-    console.error('MongoDB connection error:', error);
-    process.exit(1);
-  }
-}
-
-// Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/videos', videoRoutes);
 
-// Start server
-connectDB().then(() => {
-  app.listen(port, () => {
-    console.log(`API server running on port ${port}`);
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    error: {
+      code: 'SERVER_ERROR',
+      message: 'Internal server error'
+    }
   });
 });
+
+// Connect to MongoDB and start server
+connectToDatabase()
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  });

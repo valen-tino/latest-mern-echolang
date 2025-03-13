@@ -14,12 +14,10 @@ export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRout
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If admin route is required but user is not admin, redirect to customer dashboard
   if (requireAdmin && user?.role !== 'admin') {
     return <Navigate to="/dashboard" replace />;
   }
 
-  // If user is admin and trying to access customer routes, redirect to admin dashboard
   if (!requireAdmin && user?.role === 'admin') {
     return <Navigate to="/admin/dashboard" replace />;
   }
