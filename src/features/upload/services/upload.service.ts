@@ -1,9 +1,17 @@
 import { MAX_FILE_SIZE, SUPPORTED_FORMATS } from '../constants';
-import type { VideoMetadata } from '../types';
+import { VideoMetadata } from '../types';
+import api from '@/lib/api/client';
+
+// Constants
+export const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB
+export const SUPPORTED_FORMATS = ['mp4', 'mov', 'avi', 'mkv'];
 
 export class UploadError extends Error {
-  constructor(message: string, public code: string) {
+  code: string;
+  
+  constructor(message: string, code: string) {
     super(message);
+    this.code = code;
     this.name = 'UploadError';
   }
 }
@@ -21,70 +29,79 @@ export async function validateFile(file: File): Promise<void> {
   const fileExtension = file.name.split('.').pop()?.toLowerCase();
   if (!fileExtension || !SUPPORTED_FORMATS.includes(fileExtension)) {
     throw new UploadError(
-      'Unsupported file format. Supported formats: MP4, MOV, AVI',
-      'INVALID_FORMAT'
+      'Unsupported file format. Please upload MP4, MOV, AVI, or MKV files.',
+      'UNSUPPORTED_FORMAT'
     );
   }
 
-  // Validate file integrity
-  try {
-    const validFile = await validateFileIntegrity(file);
-    if (!validFile) {
-      throw new UploadError(
-        'File appears to be corrupt or incomplete',
-        'CORRUPT_FILE'
-      );
-    }
-  } catch (error) {
+  // Check file integrity
+  const isValid = await validateFileIntegrity(file);
+  if (!isValid) {
     throw new UploadError(
-      'Failed to validate file integrity',
-      'VALIDATION_FAILED'
+      'The file appears to be corrupted or invalid.',
+      'INVALID_FILE'
     );
   }
 }
 
 export async function uploadVideo(
-  file: File,
-  onProgress: (progress: number) => void
+  file: File, 
+  onProgress?: (progress: number) => void
 ): Promise<{ id: string; metadata: VideoMetadata }> {
-  // Validate file before upload
-  await validateFile(file);
-
-  const chunkSize = 1024 * 1024; // 1MB chunks
-  const totalChunks = Math.ceil(file.size / chunkSize);
-  let uploadedChunks = 0;
-
-  // Simulate chunked upload with progress
-  for (let i = 0; i < totalChunks; i++) {
-    const start = i * chunkSize;
-    const end = Math.min(start + chunkSize, file.size);
-    const chunk = file.slice(start, end);
-
-    // Simulate chunk upload
-    await new Promise<void>((resolve) => {
-      setTimeout(() => {
-        uploadedChunks++;
-        const progress = Math.round((uploadedChunks / totalChunks) * 100);
-        onProgress(progress);
-        resolve();
-      }, 500);
+  // Extract metadata first
+  const metadata = await extractVideoMetadata(file);
+  
+  // Create form data for upload
+  const formData = new FormData();
+  formData.append('video', file);
+  
+  try {
+    // Upload the file
+    const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:3001/api'}/videos/upload`, {
+      method: 'POST',
+      body: formData,
+      headers: {
+        // Don't set Content-Type here, it will be set automatically with boundary
+        Authorization: `Bearer ${localStorage.getItem('auth-token')}`
+      }
     });
-  }
-
-  // Return simulated response
-  return {
-    id: crypto.randomUUID(),
-    metadata: {
-      format: file.type.split('/')[1],
-      duration: 0, // Will be set by metadata extraction
-      size: file.size,
-      uploadDate: new Date().toISOString(),
-      filename: file.name
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new UploadError(
+        errorData.message || 'Failed to upload video',
+        errorData.code || 'UPLOAD_FAILED'
+      );
     }
+    
+    const result = await response.json();
+    return { 
+      id: result.id,
+      metadata
+    };
+  } catch (error) {
+    if (error instanceof UploadError) {
+      throw error;
+    }
+    throw new UploadError(
+      'Failed to upload video',
+      'UPLOAD_FAILED'
+    );
+  }
+}
+
+export async function extractVideoMetadata(file: File): Promise<VideoMetadata> {
+  // In a real app, you might use a library or backend service to extract metadata
+  // This is a simplified version
+  return {
+    format: file.name.split('.').pop()?.toLowerCase() || 'unknown',
+    duration: 0, // Would be extracted from actual video
+    size: file.size,
+    filename: file.name,
+    uploadDate: new Date().toISOString()
   };
 }
 
-// Helper function to validate file integrity
 async function validateFileIntegrity(file: File): Promise<boolean> {
   return new Promise((resolve) => {
     const reader = new FileReader();

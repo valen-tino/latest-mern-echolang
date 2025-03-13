@@ -1,74 +1,73 @@
+import axios from 'axios';
 import { Video } from '@/features/videos/types';
-import { ApiError, ApiRequestError } from './types';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-export async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('auth-token');
-  
-  const headers = {
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
     'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
-    ...options.headers,
-  };
+  },
+});
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
+// Add request interceptor to include auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('auth-token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
-  if (!response.ok) {
-    const error: ApiError = await response.json();
-    throw new ApiRequestError(
-      error.message || 'API request failed',
-      error.code || 'UNKNOWN_ERROR',
-      response.status
-    );
+// Add response interceptor to handle errors
+api.interceptors.response.use(
+  (response) => response.data,
+  (error) => {
+    // Handle session expiration
+    if (error.response?.status === 401) {
+      localStorage.removeItem('auth-token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
   }
+);
 
-  return response.json();
+export default api;
+
+// Video API functions
+export async function getVideos() {
+  return api.get('/videos');
 }
 
-export const api = {
-  get: (endpoint: string) => fetchWithAuth(endpoint),
-  post: (endpoint: string, data: any) => 
-    fetchWithAuth(endpoint, {
-      method: 'POST',
-      body: JSON.stringify(data),
-    }),
-  put: (endpoint: string, data: any) =>
-    fetchWithAuth(endpoint, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    }),
-  delete: (endpoint: string) =>
-    fetchWithAuth(endpoint, {
-      method: 'DELETE',
-    }),
-};
-
-export async function fetchVideos(userId?: string, page = 1, limit = 12) {
-  const params = new URLSearchParams({
-    ...(userId && { userId }),
-    page: page.toString(),
-    limit: limit.toString()
-  });
-
-  return api.get(`/videos?${params}`);
-}
-
-export async function fetchVideoById(id: string) {
+export async function getVideoById(id) {
   return api.get(`/videos/${id}`);
 }
 
-export async function createVideo(video: Omit<Video, '_id'>) {
-  return api.post('/videos', video);
+export async function uploadVideo(file) {
+  const formData = new FormData();
+  formData.append('video', file);
+  
+  return api.post('/videos/upload', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+    onUploadProgress: (progressEvent) => {
+      // You can use this to track upload progress
+      const percentCompleted = Math.round(
+        (progressEvent.loaded * 100) / progressEvent.total
+      );
+      console.log(`Upload progress: ${percentCompleted}%`);
+    },
+  });
 }
 
-export async function updateVideo(id: string, updates: Partial<Video>) {
+export async function updateVideo(id, updates) {
   return api.put(`/videos/${id}`, updates);
 }
 
-export async function deleteVideo(id: string) {
+export async function deleteVideo(id) {
   return api.delete(`/videos/${id}`);
 }
