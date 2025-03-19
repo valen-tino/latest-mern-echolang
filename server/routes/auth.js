@@ -1,7 +1,10 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
 import { UserCollection } from '../models/user.js';
-import { hashPassword, verifyPassword, validatePassword } from '../../lib/utils/password.js';
+// Change this import:
+// import { hashPassword, verifyPassword } from '../../lib/utils/password.js';
+// To:
+import { hashPassword, verifyPassword } from '../../src/lib/utils/password.js';
 
 const router = express.Router();
 

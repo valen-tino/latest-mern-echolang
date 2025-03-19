@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { config } from 'dotenv';
-import { connectToDatabase } from '../src/lib/db.js';
+import connectDB from '../src/lib/db.js';  // Changed to default import
 import authRoutes from './routes/auth.js';
 import videoRoutes from './routes/videos.js';
 
@@ -29,7 +29,7 @@ app.use((err, req, res, next) => {
 });
 
 // Connect to MongoDB and start server
-connectToDatabase()
+connectDB()  // Changed function name to match the import
   .then(() => {
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

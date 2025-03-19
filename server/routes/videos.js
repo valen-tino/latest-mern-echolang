@@ -2,8 +2,33 @@ import express from 'express';
 import { ObjectId } from 'mongodb';
 import { authenticateToken } from '../middleware/auth.js';
 import { VideoCollection } from '../models/video.js';
+import multer from 'multer';
+import path from 'path';
 
 const router = express.Router();
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
+
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 * 1024 }, // 2GB limit
+  fileFilter: (req, file, cb) => {
+    const fileTypes = /mp4|mov|avi|mkv/;
+    const extname = fileTypes.test(path.extname(file.originalname).toLowerCase());
+    if (extname) {
+      return cb(null, true);
+    }
+    cb(new Error('Unsupported file format. Please upload MP4, MOV, AVI, or MKV files.'));
+  }
+});
 
 // Get all videos (with pagination)
 router.get('/', authenticateToken, async (req, res) => {
@@ -93,6 +118,49 @@ router.post('/', authenticateToken, async (req, res) => {
       error: {
         code: 'SERVER_ERROR',
         message: 'Internal server error'
+      }
+    });
+  }
+});
+
+// Upload video endpoint
+router.post('/upload', authenticateToken, upload.single('video'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        error: {
+          code: 'NO_FILE_UPLOADED',
+          message: 'No file was uploaded'
+        }
+      });
+    }
+
+    const db = req.app.locals.db;
+    const video = {
+      title: req.file.originalname,
+      description: '',
+      userId: req.user.id,
+      sourceLanguage: 'en', // Default language
+      status: 'completed',
+      duration: 0, // This would be extracted from the actual video
+      size: req.file.size,
+      format: path.extname(req.file.originalname).substring(1),
+      thumbnail: '', // This would be generated
+      uploadDate: new Date(),
+      filePath: req.file.path
+    };
+
+    const result = await db.collection(VideoCollection).insertOne(video);
+    res.status(201).json({
+      id: result.insertedId,
+      success: true
+    });
+  } catch (error) {
+    console.error('Error uploading video:', error);
+    res.status(500).json({
+      error: {
+        code: 'UPLOAD_FAILED',
+        message: error.message || 'Failed to upload video'
       }
     });
   }

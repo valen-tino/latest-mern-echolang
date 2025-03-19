@@ -3,8 +3,8 @@ import { VideoMetadata } from '../types';
 import api from '@/lib/api/client';
 
 // Constants
-export const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB
-export const SUPPORTED_FORMATS = ['mp4', 'mov', 'avi', 'mkv'];
+// export const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB
+// export const SUPPORTED_FORMATS = ['mp4', 'mov', 'avi', 'mkv'];
 
 export class UploadError extends Error {
   code: string;
