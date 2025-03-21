@@ -1,6 +1,6 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import { UserCollection } from '../models/user.js';
+import { UserCollection } from '../models/User.js';
 // Change this import:
 // import { hashPassword, verifyPassword } from '../../lib/utils/password.js';
 // To:
