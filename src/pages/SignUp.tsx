@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { useAuth } from '@/lib/auth'; // Import the useAuth hook
+import { useAuth } from '@/lib/auth';
+import api from '@/services/api';  // Add this import
 
 export default function SignUp() {
   const navigate = useNavigate();
@@ -14,33 +15,44 @@ export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const { login } = useAuth(); // Use the login function from useAuth
-  const navigate = useNavigate();
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setValidationErrors([]);
 
-    if (formData.password !== formData.confirmPassword) {
+    if (password !== confirmPassword) {
       toast.error('Passwords do not match.');
       setIsLoading(false);
       return;
     }
 
-    // Simulate signup API call
-    setTimeout(async () => {
-      try {
-        // After successful signup, log the user in
-        await login(email, password); // Call the login function
-        toast.success('Account created successfully!');
-        navigate('/dashboard'); // Redirect to the dashboard after successful signup
-      } catch (error) {
-        toast.error('Failed to create account. Please try again.');
-      } finally {
-        setIsLoading(false);
+    try {
+      const response = await api.post('/auth/register', {
+        name,
+        email,
+        password,
+      });
+
+      const data = response.data;
+
+      if (data.error?.code === 'AUTH_INVALID_PASSWORD' && data.error?.requirements) {
+        setValidationErrors(data.error.requirements);
+        throw new Error('Please ensure your password meets all requirements.');
       }
-    }, 2000);
+
+      await login(email, password);
+      toast.success('Account created successfully!');
+      navigate('/dashboard');
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create account. Please try again.';
+      toast.error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -60,8 +72,8 @@ export default function SignUp() {
                 id="name"
                 type="text"
                 placeholder="John Doe"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 required
               />
             </div>
@@ -71,8 +83,8 @@ export default function SignUp() {
                 id="email"
                 type="email"
                 placeholder="m@example.com"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
               />
             </div>
@@ -81,8 +93,8 @@ export default function SignUp() {
               <Input
                 id="password"
                 type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
               {validationErrors.length > 0 && (
@@ -101,8 +113,8 @@ export default function SignUp() {
               <Input
                 id="confirm-password"
                 type="password"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 required
               />
             </div>
