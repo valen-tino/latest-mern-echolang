@@ -4,7 +4,7 @@ import { UserCollection } from '../models/User.js';
 // Change this import:
 // import { hashPassword, verifyPassword } from '../../lib/utils/password.js';
 // To:
-import { hashPassword, verifyPassword } from '../../src/lib/utils/password.js';
+import { hashPassword, verifyPassword, validatePassword } from '../../src/lib/utils/password.js';
 
 const router = express.Router();
 
@@ -72,7 +72,14 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({
         error: {
           code: 'AUTH_INVALID_PASSWORD',
-          message: 'Password does not meet requirements',
+          message: 'Your password must:',
+          requirements: [
+            'Be at least 8 characters long',
+            'Contain at least one uppercase letter',
+            'Contain at least one lowercase letter',
+            'Contain at least one number',
+            'Contain at least one special character (!@#$%^&*)'
+          ],
           details: validation.errors
         }
       });

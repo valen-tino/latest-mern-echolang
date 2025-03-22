@@ -16,32 +16,35 @@ export const useAuth = create<AuthState>((set) => ({
   isAuthenticated: false,
   user: null,
   login: async (email: string, password: string) => {
-    // Simulate API call
-    if (email === 'admin@example.com' && password === 'password') {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Invalid credentials');
+      }
+
       set({
         isAuthenticated: true,
-        user: {
-          id: '1',
-          email: 'admin@example.com',
-          name: 'Admin User',
-          role: 'admin'
-        }
+        user: data.user
       });
-    } else if (email === 'user@example.com' && password === 'password') {
-      set({
-        isAuthenticated: true,
-        user: {
-          id: '2',
-          email: 'user@example.com',
-          name: 'Test User',
-          role: 'customer'
-        }
-      });
-    } else {
-      throw new Error('Invalid credentials');
+
+      // Store the token
+      localStorage.setItem('token', data.token);
+    } catch (error) {
+      console.error('Login error:', error);
+      throw error;
     }
   },
   logout: () => {
+    localStorage.removeItem('token');
     set({ isAuthenticated: false, user: null });
   }
 }));
