@@ -3,6 +3,7 @@ import cors from 'cors';
 import { config } from 'dotenv';
 import mongoose from 'mongoose';
 import authRoutes from './routes/authRoute.js';
+import feedbackRoutes from './routes/feedbackRoute.js';
 import videoRoutes from './routes/videos.js';
 
 config();
@@ -23,6 +24,7 @@ mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/echolang'
   
   // API Routes
   app.use('/api/auth', authRoutes);
+  app.use('/feedback', feedbackRoutes);
   app.use('/api/videos', videoRoutes);
   
   app.listen(PORT, () => {
