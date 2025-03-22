@@ -10,10 +10,19 @@ export async function login(credentials: LoginCredentials): Promise<{ token: str
   });
 
   if (!response.ok) {
-    throw new Error('Invalid credentials');
+    const error = await response.json();
+    throw new Error(error.error?.message || 'Login failed');
   }
 
-  return response.json();
+  const data = await response.json();
+  return {
+    token: data.token,
+    user: {
+      ...data.user,
+      emailVerified: true, // Server doesn't return this yet
+      createdAt: new Date().toISOString() // Server doesn't return this yet
+    }
+  };
 }
 
 export async function register(data: {
@@ -28,16 +37,27 @@ export async function register(data: {
   });
 
   if (!response.ok) {
-    throw new Error('Registration failed');
+    const error = await response.json();
+    throw new Error(error.error?.message || 'Registration failed');
   }
 }
 
 export async function logout(): Promise<void> {
+  const token = localStorage.getItem('token');
+  if (!token) return;
+
   const response = await fetch(`${API_BASE}/logout`, {
-    method: 'POST'
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
   });
 
   if (!response.ok) {
-    throw new Error('Logout failed');
+    const error = await response.json();
+    throw new Error(error.error?.message || 'Logout failed');
   }
+
+  localStorage.removeItem('token');
 }

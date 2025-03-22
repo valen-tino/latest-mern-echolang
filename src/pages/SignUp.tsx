@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { useAuth } from '@/lib/auth'; // Import the useAuth hook
+import { useAuth } from '@/lib/auth';
 
 export default function SignUp() {
   const [isLoading, setIsLoading] = useState(false);
@@ -13,12 +13,14 @@ export default function SignUp() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const { login } = useAuth(); // Use the login function from useAuth
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setValidationErrors([]);
 
     if (password !== confirmPassword) {
       toast.error('Passwords do not match.');
@@ -26,19 +28,38 @@ export default function SignUp() {
       return;
     }
 
-    // Simulate signup API call
-    setTimeout(async () => {
-      try {
-        // After successful signup, log the user in
-        await login(email, password); // Call the login function
-        toast.success('Account created successfully!');
-        navigate('/dashboard'); // Redirect to the dashboard after successful signup
-      } catch (error) {
-        toast.error('Failed to create account. Please try again.');
-      } finally {
-        setIsLoading(false);
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.error?.code === 'AUTH_INVALID_PASSWORD' && data.error?.requirements) {
+          setValidationErrors(data.error.requirements);
+          throw new Error('Please ensure your password meets all requirements.');
+        }
+        throw new Error(data.error?.message || 'Failed to create account');
       }
-    }, 2000);
+
+      await login(email, password);
+      toast.success('Account created successfully!');
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to create account. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -83,6 +104,16 @@ export default function SignUp() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              {validationErrors.length > 0 && (
+                <div className="text-sm text-muted-foreground">
+                  <p className="mb-1 font-medium">Your password must:</p>
+                  <ul className="space-y-1 list-disc list-inside">
+                    {validationErrors.map((error, index) => (
+                      <li key={index} className="text-destructive">{error}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="confirm-password">Confirm Password</Label>
@@ -103,7 +134,7 @@ export default function SignUp() {
             >
               {isLoading ? 'Creating account...' : 'Create account'}
             </Button>
-            <div className="text-sm text-muted-foreground text-center">
+            <div className="text-sm text-center text-muted-foreground">
               Already have an account?{' '}
               <Link 
                 to="/login" 

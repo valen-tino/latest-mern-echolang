@@ -13,9 +13,24 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/videos', videoRoutes);
+// Connect to MongoDB and start server
+connectDB()  // Changed function name to match the import
+  .then((db) => {
+    // Store the database connection in app.locals
+    app.locals.db = db;
+    
+    // API Routes
+    app.use('/api/auth', authRoutes);
+    app.use('/api/videos', videoRoutes);
+    
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -27,15 +42,3 @@ app.use((err, req, res, next) => {
     }
   });
 });
-
-// Connect to MongoDB and start server
-connectDB()  // Changed function name to match the import
-  .then(() => {
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  })
-  .catch((err) => {
-    console.error('Failed to start server:', err);
-    process.exit(1);
-  });
