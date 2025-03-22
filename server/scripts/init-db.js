@@ -11,8 +11,10 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/echola
 
 async function initializeDatabase() {
   try {
-    // Connect using mongoose
-    await mongoose.connect(MONGODB_URI);
+    // Connect using mongoose with modern options
+    await mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 5000
+    });
     console.log('Connected to MongoDB');
 
     // Get the underlying MongoDB connection
