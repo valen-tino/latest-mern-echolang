@@ -1,6 +1,6 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import User from '../../models/userSchema.js';
+import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
 import validator from 'validator';
 import { authMiddleware } from '../middleware/authMiddleware.js';
@@ -41,7 +41,7 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        console.log('Login attempt for: ' + usernameOrEmail);
+        console.log('Login attempt for: ' + email);
 
         const user = await User.findOne({ email });
         if(!user){
@@ -63,12 +63,23 @@ router.post('/login', async (req, res) => {
             token,
             user: {
                 id: user._id,
-                name: user.name,
                 email: user.email,
-                username: user.username,
                 role: user.role
             }
         });
+    } catch(error){
+        console.error('Error: ', error);
+        res.status(500).json({ message: 'Internal Server Error!'});
+    }
+});
+
+router.get('/current', authMiddleware, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select('-password');
+        if(!user){
+            return res.status(404).json({ message: 'User not found!'});
+        }
+        res.json(user);
     } catch(error){
         console.error('Error: ', error);
         res.status(500).json({ message: 'Internal Server Error!'});
@@ -92,3 +103,5 @@ router.get('/role', authMiddleware, async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error!'});
     }
 });
+
+export default router;

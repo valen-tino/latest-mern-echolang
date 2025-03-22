@@ -11,10 +11,12 @@ import { CustomerDashboard } from '@/features/dashboard/components/CustomerDashb
 import { AdminDashboard } from '@/features/dashboard/components/AdminDashboard';
 import Upload from '@/pages/Upload';
 import VideoDetails from '@/pages/VideoDetails';
+import { AuthProvider } from './contexts/AuthContext';
 
 export default function App() {
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <AuthProvider>
       <Router>
         <div className="flex flex-col min-h-screen bg-background">
           <Navbar />
@@ -63,6 +65,7 @@ export default function App() {
           <Toaster />
         </div>
       </Router>
+      </AuthProvider>
     </ThemeProvider>
   );
 }
