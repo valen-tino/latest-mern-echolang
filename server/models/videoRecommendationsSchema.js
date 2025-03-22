@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const videoRecommendationsSchema = new Schema({
+const videoRecommendationsSchema = new mongoose.Schema({
     video_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Video', required: true },
     recommendation_video_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Video', required: true },
     recommendation_date: { type: Date, default: Date.now }
