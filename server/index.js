@@ -3,6 +3,7 @@ import cors from 'cors';
 import { config } from 'dotenv';
 import connectDB from '../src/lib/db.js';  // Changed to default import
 import authRoutes from './routes/authRoute.js';
+import feedbackRoutes from './routes/feedbackRoute.js';
 // import videoRoutes from './routes/videos.js';
 
 config();
@@ -15,6 +16,7 @@ app.use(express.json());
 
 // API Routes
 app.use('/auth', authRoutes);
+app.use('/feedback', feedbackRoutes);
 // app.use('/api/videos', videoRoutes);
 
 // Error handling middleware
